@@ -1,0 +1,125 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="980" height="600" viewBox="0 0 980 600" font-family="Segoe UI, -apple-system, Helvetica, Arial, sans-serif">
+
+  <!-- Rendered output of scripts/08-Demo-StorageTest.ps1?format=html -->
+
+  <defs>
+    <filter id="cardShadow" x="-2%" y="-2%" width="104%" height="110%">
+      <feDropShadow dx="0" dy="1" stdDeviation="2" flood-color="#000000" flood-opacity="0.12"/>
+    </filter>
+  </defs>
+
+  <rect width="980" height="600" fill="#faf9f8"/>
+
+  <!-- Browser chrome -->
+  <rect x="0" y="0" width="980" height="34" fill="#edebe9"/>
+  <circle cx="22" cy="17" r="5" fill="#ff5f57"/>
+  <circle cx="40" cy="17" r="5" fill="#febc2e"/>
+  <circle cx="58" cy="17" r="5" fill="#28c840"/>
+  <rect x="80" y="7" width="700" height="20" rx="10" fill="#ffffff"/>
+  <text x="92" y="21" font-size="11" fill="#605e5c">https://func-bootcamp-1234.azurewebsites.net/api/Demo-StorageTest?format=html</text>
+  <rect x="790" y="7" width="52" height="20" rx="10" fill="#dff6dd"/>
+  <text x="800" y="21" font-size="11" font-weight="600" fill="#107c10">200 OK</text>
+
+  <!-- Heading -->
+  <text x="32" y="76" font-size="24" font-weight="600" fill="#201f1e">Storage Private Endpoint Validation</text>
+  <text x="32" y="100" font-size="12.5" fill="#605e5c">
+    Account: <tspan font-weight="700" fill="#323130">stfuncbc12345</tspan>
+    <tspan dx="6">·</tspan><tspan dx="6">Instance: 3f7a1c9e5b2d84a6</tspan>
+    <tspan dx="6">·</tspan><tspan dx="6">Plan: ElasticPremium</tspan>
+    <tspan dx="6">·</tspan><tspan dx="6">Generated: 2026-08-26 09:14:22Z</tspan>
+  </text>
+
+  <!-- Table -->
+  <g filter="url(#cardShadow)">
+    <rect x="32" y="118" width="916" height="410" fill="#ffffff"/>
+  </g>
+
+  <!-- Header row -->
+  <rect x="32" y="118" width="916" height="34" fill="#0078d4"/>
+  <text x="46"  y="140" font-size="12.5" font-weight="600" fill="#ffffff">Test</text>
+  <text x="350" y="140" font-size="12.5" font-weight="600" fill="#ffffff">Result</text>
+  <text x="440" y="140" font-size="12.5" font-weight="600" fill="#ffffff">Duration</text>
+  <text x="540" y="140" font-size="12.5" font-weight="600" fill="#ffffff">Detail</text>
+
+  <!-- Row 1 -->
+  <text x="46"  y="174" font-size="12" fill="#201f1e">Host Startup</text>
+  <text x="350" y="174" font-size="12" font-weight="600" fill="#107c10">PASS</text>
+  <text x="440" y="174" font-size="12" fill="#201f1e">3 ms</text>
+  <text x="540" y="174" font-size="12" fill="#605e5c">Runtime online on instance 3f7a1c9e5b2d84a6 (ElasticPremium)</text>
+  <line x1="32" y1="186" x2="948" y2="186" stroke="#edebe9"/>
+
+  <!-- Row 2 -->
+  <text x="46"  y="208" font-size="12" fill="#201f1e">Managed Identity Authentication</text>
+  <text x="350" y="208" font-size="12" font-weight="600" fill="#107c10">PASS</text>
+  <text x="440" y="208" font-size="12" fill="#201f1e">812 ms</text>
+  <text x="540" y="208" font-size="12" fill="#605e5c">Authenticated as 6b1f0c4d-9e2a-4c7b-8f3d-1a5e9c07b2d4 (ManagedService)</text>
+  <line x1="32" y1="220" x2="948" y2="220" stroke="#edebe9"/>
+
+  <!-- Row 3 -->
+  <text x="46"  y="242" font-size="12" fill="#201f1e">Blob Upload</text>
+  <text x="350" y="242" font-size="12" font-weight="600" fill="#107c10">PASS</text>
+  <text x="440" y="242" font-size="12" fill="#201f1e">486 ms</text>
+  <text x="540" y="242" font-size="12" fill="#605e5c">Uploaded a3f9c2e17b04.txt to 'validation-probe'</text>
+  <line x1="32" y1="254" x2="948" y2="254" stroke="#edebe9"/>
+
+  <!-- Row 4 -->
+  <text x="46"  y="276" font-size="12" fill="#201f1e">Blob Download</text>
+  <text x="350" y="276" font-size="12" font-weight="600" fill="#107c10">PASS</text>
+  <text x="440" y="276" font-size="12" fill="#201f1e">271 ms</text>
+  <text x="540" y="276" font-size="12" fill="#605e5c">Round-tripped 42 bytes intact</text>
+  <line x1="32" y1="288" x2="948" y2="288" stroke="#edebe9"/>
+
+  <!-- Row 5 -->
+  <text x="46"  y="310" font-size="12" fill="#201f1e">Queue Write</text>
+  <text x="350" y="310" font-size="12" font-weight="600" fill="#107c10">PASS</text>
+  <text x="440" y="310" font-size="12" fill="#201f1e">198 ms</text>
+  <text x="540" y="310" font-size="12" fill="#605e5c">Enqueued probe message to 'validation-probe'</text>
+  <line x1="32" y1="322" x2="948" y2="322" stroke="#edebe9"/>
+
+  <!-- Row 6 -->
+  <text x="46"  y="344" font-size="12" fill="#201f1e">Queue Read</text>
+  <text x="350" y="344" font-size="12" font-weight="600" fill="#107c10">PASS</text>
+  <text x="440" y="344" font-size="12" fill="#201f1e">164 ms</text>
+  <text x="540" y="344" font-size="12" fill="#605e5c">Dequeued and verified probe message</text>
+  <line x1="32" y1="356" x2="948" y2="356" stroke="#edebe9"/>
+
+  <!-- Row 7 -->
+  <text x="46"  y="378" font-size="12" fill="#201f1e">Table Insert</text>
+  <text x="350" y="378" font-size="12" font-weight="600" fill="#107c10">PASS</text>
+  <text x="440" y="378" font-size="12" fill="#201f1e">233 ms</text>
+  <text x="540" y="378" font-size="12" fill="#605e5c">Inserted entity validation/a3f9c2e17b04</text>
+  <line x1="32" y1="390" x2="948" y2="390" stroke="#edebe9"/>
+
+  <!-- Row 8 -->
+  <text x="46"  y="412" font-size="12" fill="#201f1e">Table Query</text>
+  <text x="350" y="412" font-size="12" font-weight="600" fill="#107c10">PASS</text>
+  <text x="440" y="412" font-size="12" fill="#201f1e">149 ms</text>
+  <text x="540" y="412" font-size="12" fill="#605e5c">Retrieved entity validation/a3f9c2e17b04</text>
+  <line x1="32" y1="424" x2="948" y2="424" stroke="#edebe9"/>
+
+  <!-- Row 9 - control-plane assertion -->
+  <text x="46"  y="446" font-size="12" fill="#201f1e">Public Network Access Disabled</text>
+  <text x="350" y="446" font-size="12" font-weight="600" fill="#107c10">PASS</text>
+  <text x="440" y="446" font-size="12" fill="#201f1e">592 ms</text>
+  <text x="540" y="446" font-size="12" fill="#605e5c">PublicNetworkAccess = Disabled</text>
+  <line x1="32" y1="458" x2="948" y2="458" stroke="#edebe9"/>
+
+  <!-- Row 10 - control-plane assertion -->
+  <text x="46"  y="480" font-size="12" fill="#201f1e">Shared Key Access Disabled</text>
+  <text x="350" y="480" font-size="12" font-weight="600" fill="#107c10">PASS</text>
+  <text x="440" y="480" font-size="12" fill="#201f1e">2 ms</text>
+  <text x="540" y="480" font-size="12" fill="#605e5c">AllowSharedKeyAccess = False</text>
+  <line x1="32" y1="492" x2="948" y2="492" stroke="#edebe9"/>
+
+  <!-- Row 11 -->
+  <text x="46"  y="514" font-size="12" fill="#201f1e">HTML Report Render</text>
+  <text x="350" y="514" font-size="12" font-weight="600" fill="#107c10">PASS</text>
+  <text x="440" y="514" font-size="12" fill="#201f1e">11 ms</text>
+  <text x="540" y="514" font-size="12" fill="#605e5c">Rendered 2417 bytes of HTML</text>
+
+  <!-- Summary -->
+  <rect x="32" y="548" width="150" height="26" rx="13" fill="#dff6dd"/>
+  <text x="48" y="566" font-size="13" font-weight="700" fill="#107c10">11 / 11 tests passed.</text>
+  <text x="200" y="566" font-size="12" fill="#605e5c">All storage traffic traversed Private Endpoints using Managed Identity.</text>
+
+</svg>

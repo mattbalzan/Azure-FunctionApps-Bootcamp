@@ -26,6 +26,8 @@ Core capabilities include:
 | [scripts/05-Demo-VNetIntegration-Function.ps1](scripts/05-Demo-VNetIntegration-Function.ps1) | Inventory + internal connectivity test, run from a VNet-integrated function |
 | [scripts/06-Setup-FunctionApp.ps1](scripts/06-Setup-FunctionApp.ps1) | Builds the whole lab: storage, identity, RBAC, App Insights, Function App, functions |
 | [scripts/07-Setup-VNetIntegration.ps1](scripts/07-Setup-VNetIntegration.ps1) | Configures Regional VNet Integration for hybrid connectivity |
+| [scripts/08-Demo-StorageTest.ps1](scripts/08-Demo-StorageTest.ps1) | End-to-end validation of a locked-down storage account (JSON + HTML report) |
+| [infra/main.bicep](infra/main.bicep) | Infrastructure as Code for the whole lab, with an optional locked-down network topology |
 | [workbooks/Function-Monitoring.workbook.json](workbooks/Function-Monitoring.workbook.json) | Azure Monitor workbook for invocation monitoring |
 | [workbooks/Monitor-Workbook-Setup-Guide.md](workbooks/Monitor-Workbook-Setup-Guide.md) | Step-by-step guide for deploying that workbook |
 | [docs/Storage-Private-Endpoints.md](docs/Storage-Private-Endpoints.md) | Running a Function App when the storage account has public network access **disabled** |
