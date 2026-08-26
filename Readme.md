@@ -28,6 +28,7 @@ Core capabilities include:
 | [scripts/07-Setup-VNetIntegration.ps1](scripts/07-Setup-VNetIntegration.ps1) | Configures Regional VNet Integration for hybrid connectivity |
 | [workbooks/Function-Monitoring.workbook.json](workbooks/Function-Monitoring.workbook.json) | Azure Monitor workbook for invocation monitoring |
 | [workbooks/Monitor-Workbook-Setup-Guide.md](workbooks/Monitor-Workbook-Setup-Guide.md) | Step-by-step guide for deploying that workbook |
+| [docs/Storage-Private-Endpoints.md](docs/Storage-Private-Endpoints.md) | Running a Function App when the storage account has public network access **disabled** |
 
 Every script carries full comment-based help — run `Get-Help .\script.ps1 -Full` for parameters and examples.
 
@@ -115,11 +116,111 @@ Every script carries full comment-based help — run `Get-Help .\script.ps1 -Ful
 
 ## 🌐 Regional VNet Integration (Hybrid Connectivity)
 
-1. Confirm the Function App is on a **Premium (EP1+) or Dedicated** plan — Consumption is not supported
-2. Create a **VNet with a subnet delegated to `Microsoft.Web/serverFarms`**
-3. Enable **Regional VNet Integration** on the Function App
-4. Optionally set **`WEBSITE_VNET_ROUTE_ALL`** to route all outbound traffic through the VNet
-5. Validate connectivity to internal resources from inside a function
+By default a Function App lives on shared, multi-tenant App Service infrastructure and talks to everything over the **public internet** — even to resources sitting in your own subscription. **Regional VNet Integration** changes that: it gives the app an outbound network interface inside *your* VNet, so calls to private resources leave from a private IP in your address space.
+
+> 🔹 "Regional" means the VNet must be in the **same region** as the Function App. The older *gateway-required* VNet Integration handled cross-region and is legacy — don't build anything new on it.
+
+### What it does and doesn't do
+
+| | |
+| ---- | ---- |
+| ✅ **Outbound** calls from your code reach private IPs — VMs, SQL MI, internal load balancers, private endpoints, on-prem over VPN/ExpressRoute | ❌ It does **not** make the Function App itself private. `https://<app>.azurewebsites.net` stays publicly reachable |
+| ✅ Traffic is sourced from the delegated subnet, so on-prem firewalls only ever see your VNet's address space | ❌ It is **not** a private endpoint. To restrict *inbound* traffic you need a Private Endpoint on the app, or access restrictions |
+| ✅ Works across **peered** VNets and hub-and-spoke topologies | ❌ **Not supported on the Consumption (Y1) plan** — Premium (EP1+), Dedicated, or Flex Consumption only |
+
+Inbound and outbound are two separate problems. VNet Integration solves outbound; Private Endpoints solve inbound. Most "locked down" designs use both.
+
+### How it works
+
+```mermaid
+flowchart LR
+    FA["Function App<br/>Premium EP1+"]
+
+    subgraph VNET["Your VNet — same region"]
+        SNET["Delegated subnet<br/>Microsoft.Web/serverFarms<br/>10.20.1.0/24"]
+        SQL["Private SQL / VM /<br/>Private Endpoint"]
+        GW["VPN / ExpressRoute<br/>Gateway"]
+    end
+
+    ONPREM["On-prem network"]
+    INTERNET["Public internet"]
+
+    FA -->|"outbound calls"| SNET
+    SNET --> SQL
+    SNET --> GW --> ONPREM
+    SNET -.->|"only if WEBSITE_VNET_ROUTE_ALL=1"| INTERNET
+```
+
+The delegation to `Microsoft.Web/serverFarms` is what tells Azure this subnet is reserved for App Service outbound NICs. A delegated subnet **cannot** host anything else — no VMs, no private endpoints. Always create a second, undelegated subnet for those.
+
+### Setting it up
+
+1. **Confirm the plan.** Premium (EP1+), Dedicated (App Service), or Flex Consumption. On classic Consumption there is no workaround — you must scale up first.
+2. **Create a VNet with a subnet delegated to `Microsoft.Web/serverFarms`**, in the same region as the app.
+3. **Enable Regional VNet Integration** on the Function App — *Networking* → *Outbound traffic* → **VNet integration**.
+4. **Decide how much traffic to route.** By default only **RFC1918 private ranges** (10/8, 172.16/12, 192.168/16) plus service endpoints go down the VNet; everything else still exits over the public internet.
+5. **Validate** connectivity to an internal resource from inside a function.
+
+```powershell
+.\scripts\07-Setup-VNetIntegration.ps1 -ResourceGroup rg-functionapps-bootcamp `
+    -FunctionAppName func-bootcamp-1234 -RouteAllThroughVNet
+```
+
+### Subnet sizing — get this right first time
+
+You **cannot resize a subnet that already has integration on it** without tearing the integration down. Plan for peak scale-out:
+
+| Subnet size | Usable IPs | Realistic max instances |
+| ----------- | ---------- | ----------------------- |
+| /28 | 11 | ~10 — too tight for anything but a demo |
+| /26 | 59 | Minimum recommended for Premium |
+| /24 | 251 | Comfortable, and what most production apps use |
+
+Azure reserves **5 addresses** in every subnet, and Premium plans consume an IP per instance while scaling — including briefly during deployments and slot swaps.
+
+### The app settings that actually matter
+
+| Setting | Effect |
+| ------- | ------ |
+| `WEBSITE_VNET_ROUTE_ALL = 1` | Routes **all** outbound traffic through the VNet, not just RFC1918. Required if you want NSGs, UDRs, Azure Firewall or forced tunnelling to apply to internet-bound calls |
+| `WEBSITE_CONTENTOVERVNET = 1` | Mounts the Azure Files content share over the VNet — mandatory when the storage account is locked down |
+| `WEBSITE_DNS_SERVER` | Points the app at a custom DNS server (e.g. a hub DNS VM or DNS Private Resolver) instead of Azure-provided DNS |
+
+> 🔹 `vnetRouteAllEnabled` on the site config is the newer equivalent of `WEBSITE_VNET_ROUTE_ALL`. Setting either works; setting both to conflicting values does not.
+
+### DNS is the usual culprit
+
+Integration gives you a *route*. It does not give you *name resolution*. If your function resolves `sql-internal.database.windows.net` to a public IP, the private route never gets used. You need either Azure Private DNS zones linked to the VNet, or a custom DNS server reachable from the integration subnet via `WEBSITE_DNS_SERVER`.
+
+Diagnose from the Kudu console (`https://<app>.scm.azurewebsites.net` → Debug console → CMD):
+
+```
+nameresolver sql-internal.database.windows.net
+tcpping sql-internal.database.windows.net:1433
+```
+
+`nameresolver` should return a private IP. If it doesn't, fix DNS before touching anything else.
+
+### Controlling the traffic once it's in the VNet
+
+- **NSGs** on the delegated subnet filter outbound traffic — but only traffic that is actually routed through the VNet, so pair with `WEBSITE_VNET_ROUTE_ALL=1`.
+- **UDRs** can force-tunnel everything to an **Azure Firewall** or NVA for inspection and egress logging.
+- **Service endpoints** on the delegated subnet let you allow-list that subnet on a storage account or SQL server firewall, as a lighter-weight alternative to private endpoints.
+
+### Common gotchas
+
+| Symptom | Cause |
+| ------- | ----- |
+| Integration option greyed out | App is on the Consumption (Y1) plan |
+| "Subnet is not delegated" | Missing `Microsoft.Web/serverFarms` delegation |
+| Can reach 10.x resources but not a public API through the firewall | `WEBSITE_VNET_ROUTE_ALL` not set to `1` |
+| Resolves to a public IP | Private DNS zone not linked to the VNet |
+| Scale-out stalls under load | Integration subnet ran out of IPs |
+| App still publicly reachable after integrating | Expected — that's inbound. Add a Private Endpoint or access restrictions |
+
+### Where to go next
+
+The most common real-world use of this is locking down the Function App's own storage account. See [docs/Storage-Private-Endpoints.md](docs/Storage-Private-Endpoints.md) for the full walkthrough of running with **Public network access = Disabled**.
 
 ---
 
