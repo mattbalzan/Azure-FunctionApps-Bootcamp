@@ -1,0 +1,283 @@
+{
+  "$schema": "https://github.com/Microsoft/Application-Insights-Workbooks/blob/master/schema/workbook.json",
+  "version": "Notebook/1.0",
+  "fallbackResourceIds": [
+    "Azure Monitor"
+  ],
+  "items": [
+    {
+      "type": 1,
+      "content": {
+        "json": "# Azure Functions — Invocation Monitoring\n\nInvocation outcomes, durations, failures and exceptions for one or more Function Apps.\n\n> Requires **Application Insights** linked to the Function App (set at creation, or via the `APPLICATIONINSIGHTS_CONNECTION_STRING` app setting) selected below."
+      },
+      "name": "text - title"
+    },
+    {
+      "type": 9,
+      "content": {
+        "version": "KqlParameterItem/1.0",
+        "parameters": [
+          {
+            "id": "b2c3d4e5-0001-4000-8000-000000000001",
+            "version": "KqlParameterItem/1.0",
+            "name": "TimeRange",
+            "label": "Time range",
+            "type": 4,
+            "isRequired": true,
+            "typeSettings": {
+              "selectableValues": [
+                { "durationMs": 3600000 },
+                { "durationMs": 14400000 },
+                { "durationMs": 86400000 },
+                { "durationMs": 172800000 },
+                { "durationMs": 604800000 },
+                { "durationMs": 2592000000 }
+              ],
+              "allowCustom": true
+            },
+            "value": { "durationMs": 86400000 }
+          },
+          {
+            "id": "b2c3d4e5-0001-4000-8000-000000000002",
+            "version": "KqlParameterItem/1.0",
+            "name": "AppInsights",
+            "label": "Application Insights resource",
+            "type": 5,
+            "isRequired": true,
+            "multiSelect": true,
+            "quote": "'",
+            "delimiter": ",",
+            "typeSettings": {
+              "resourceTypeFilter": {
+                "microsoft.insights/components": true
+              },
+              "additionalResourceOptions": [],
+              "showDefault": false
+            }
+          },
+          {
+            "id": "b2c3d4e5-0001-4000-8000-000000000003",
+            "version": "KqlParameterItem/1.0",
+            "name": "FunctionName",
+            "label": "Function",
+            "type": 2,
+            "multiSelect": true,
+            "quote": "'",
+            "delimiter": ",",
+            "query": "requests\n| distinct name\n| where isnotempty(name)\n| order by name asc",
+            "crossComponentResources": [
+              "{AppInsights}"
+            ],
+            "typeSettings": {
+              "additionalResourceOptions": [
+                "value::all"
+              ],
+              "showDefault": false
+            },
+            "timeContext": { "durationMs": 0 },
+            "timeContextFromParameter": "TimeRange",
+            "queryType": 0,
+            "resourceType": "microsoft.insights/components",
+            "value": [
+              "value::all"
+            ]
+          }
+        ],
+        "style": "pills",
+        "queryType": 0,
+        "resourceType": "microsoft.insights/components"
+      },
+      "name": "parameters"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "## Invocation outcomes"
+      },
+      "name": "text - outcomes heading"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "requests\n| where \"*\" in ({FunctionName}) or name in ({FunctionName})\n| extend Outcome = iff(success == \"True\", \"Succeeded\", \"Failed\")\n| summarize Invocations = count() by Outcome\n| order by Invocations desc",
+        "size": 3,
+        "title": "Invocations by outcome",
+        "timeContext": { "durationMs": 0 },
+        "timeContextFromParameter": "TimeRange",
+        "queryType": 0,
+        "resourceType": "microsoft.insights/components",
+        "crossComponentResources": [
+          "{AppInsights}"
+        ],
+        "visualization": "tiles",
+        "tileSettings": {
+          "titleContent": {
+            "columnMatch": "Outcome",
+            "formatter": 1
+          },
+          "leftContent": {
+            "columnMatch": "Invocations",
+            "formatter": 12,
+            "formatOptions": {
+              "palette": "auto"
+            }
+          },
+          "showBorder": true
+        }
+      },
+      "name": "query - outcome tiles"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "requests\n| where \"*\" in ({FunctionName}) or name in ({FunctionName})\n| extend Outcome = iff(success == \"True\", \"Succeeded\", \"Failed\")\n| summarize Invocations = count() by bin(timestamp, {TimeRange:grain}), Outcome",
+        "size": 0,
+        "title": "Invocations over time",
+        "timeContext": { "durationMs": 0 },
+        "timeContextFromParameter": "TimeRange",
+        "queryType": 0,
+        "resourceType": "microsoft.insights/components",
+        "crossComponentResources": [
+          "{AppInsights}"
+        ],
+        "visualization": "linechart"
+      },
+      "name": "query - outcome trend"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "## Failures"
+      },
+      "name": "text - failures heading"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "requests\n| where \"*\" in ({FunctionName}) or name in ({FunctionName})\n| summarize Total = count(), Failed = countif(success == \"False\"), LastRun = max(timestamp) by Function = name\n| extend ['Failure %'] = round(todouble(Failed) * 100 / Total, 1)\n| order by Failed desc, ['Failure %'] desc",
+        "size": 0,
+        "title": "Failure rate by function",
+        "timeContext": { "durationMs": 0 },
+        "timeContextFromParameter": "TimeRange",
+        "queryType": 0,
+        "resourceType": "microsoft.insights/components",
+        "crossComponentResources": [
+          "{AppInsights}"
+        ],
+        "visualization": "table",
+        "gridSettings": {
+          "formatters": [
+            {
+              "columnMatch": "Failed",
+              "formatter": 8,
+              "formatOptions": {
+                "palette": "red"
+              }
+            },
+            {
+              "columnMatch": "Failure %",
+              "formatter": 8,
+              "formatOptions": {
+                "palette": "redBright"
+              }
+            }
+          ],
+          "sortBy": [
+            {
+              "itemKey": "Failed",
+              "sortOrder": 2
+            }
+          ]
+        }
+      },
+      "name": "query - failure rate"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "exceptions\n| where \"*\" in ({FunctionName}) or operation_Name in ({FunctionName})\n| project timestamp, Function = operation_Name, Type = type, Message = outermost_message\n| order by timestamp desc\n| take 50",
+        "size": 0,
+        "title": "Recent exceptions",
+        "timeContext": { "durationMs": 0 },
+        "timeContextFromParameter": "TimeRange",
+        "queryType": 0,
+        "resourceType": "microsoft.insights/components",
+        "crossComponentResources": [
+          "{AppInsights}"
+        ],
+        "visualization": "table",
+        "gridSettings": {
+          "formatters": [
+            {
+              "columnMatch": "Message",
+              "formatter": 7,
+              "formatOptions": {
+                "linkTarget": "cellDetails",
+                "linkLabel": "View"
+              }
+            }
+          ]
+        }
+      },
+      "name": "query - exceptions"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "## Duration and cost drivers\n\nConsumption and Premium plans bill on execution time and memory, so the slowest functions are usually the most expensive ones."
+      },
+      "name": "text - duration heading"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "requests\n| where \"*\" in ({FunctionName}) or name in ({FunctionName})\n| project timestamp, Function = name, ResultCode = resultCode, ['Duration (ms)'] = duration\n| order by ['Duration (ms)'] desc\n| take 25",
+        "size": 0,
+        "title": "Longest running invocations",
+        "timeContext": { "durationMs": 0 },
+        "timeContextFromParameter": "TimeRange",
+        "queryType": 0,
+        "resourceType": "microsoft.insights/components",
+        "crossComponentResources": [
+          "{AppInsights}"
+        ],
+        "visualization": "table",
+        "gridSettings": {
+          "formatters": [
+            {
+              "columnMatch": "Duration (ms)",
+              "formatter": 4,
+              "formatOptions": {
+                "palette": "orange"
+              }
+            }
+          ]
+        }
+      },
+      "name": "query - longest invocations"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "requests\n| where \"*\" in ({FunctionName}) or name in ({FunctionName})\n| summarize Invocations = count() by cloud_RoleInstance",
+        "size": 0,
+        "title": "Invocations by instance (scale-out)",
+        "timeContext": { "durationMs": 0 },
+        "timeContextFromParameter": "TimeRange",
+        "queryType": 0,
+        "resourceType": "microsoft.insights/components",
+        "crossComponentResources": [
+          "{AppInsights}"
+        ],
+        "visualization": "barchart"
+      },
+      "name": "query - instances"
+    }
+  ]
+}
